@@ -2,6 +2,7 @@
 
 import os
 import requests
+from shared.email_template import build_email_html
 
 def get_graph_token():
     tenant_id = os.environ.get('TENANT_ID')
@@ -18,7 +19,7 @@ def get_graph_token():
     resp.raise_for_status()
     return resp.json()['access_token']
 
-def send_email(subject, body, to, importance='normal'):
+def send_email(subject, fields, to, article_html='', importance='normal'):
     token = get_graph_token()
     sender = os.environ.get('SENDER_EMAIL')
     url = 'https://graph.microsoft.com/v1.0/users/{}/sendMail'.format(sender)
@@ -26,12 +27,13 @@ def send_email(subject, body, to, importance='normal'):
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
     }
+    html_body = build_email_html(fields, article_html)
     message = {
         'message': {
             'subject': subject,
             'body': {
                 'contentType': 'HTML',
-                'content': body
+                'content': html_body
             },
             'toRecipients': [{'emailAddress': {'address': to}}],
             'importance': importance
